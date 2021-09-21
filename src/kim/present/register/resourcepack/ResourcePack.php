@@ -39,13 +39,14 @@ use function file_get_contents;
 use function hash;
 use function implode;
 use function is_file;
+use function json_decode;
 use function json_encode;
 use function md5;
 use function rtrim;
+use function str_ends_with;
 use function str_replace;
 use function strlen;
 use function substr;
-use function unlink;
 
 abstract class ResourcePack implements IResourcePack{
     protected string $name;
@@ -97,6 +98,10 @@ abstract class ResourcePack implements IResourcePack{
         foreach($files as $innerPath => $realPath){
             if(is_file($realPath)){
                 $contents = file_get_contents($realPath);
+                if(str_ends_with($realPath, ".json")){
+                    $json = json_decode($contents, true);
+                    $contents = json_encode($json, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+                }
                 $archive->addFromString($innerPath, $contents);
 
                 $fullContents .= $contents;
