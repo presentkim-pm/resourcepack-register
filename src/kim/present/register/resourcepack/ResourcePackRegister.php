@@ -33,8 +33,6 @@ namespace kim\present\register\resourcepack;
 use pocketmine\resourcepacks\ResourcePack;
 use pocketmine\resourcepacks\ResourcePackManager;
 use pocketmine\Server;
-use ReflectionClass;
-use ReflectionProperty;
 
 use function strtolower;
 
@@ -42,29 +40,10 @@ final class ResourcePackRegister{
     private function __construct(){ }
 
     public static function registerPack(ResourcePack $resourcePack) : void{
-        /**
-         * @var ReflectionProperty $resourcePacksAccessor
-         * @var ReflectionProperty $uuidListAccessor
-         */
-        static $resourcePacksAccessor, $uuidListAccessor;
-        if(!isset($resourcePacksAccessor) || !isset($uuidListAccessor)){
-            $ref = new ReflectionClass(ResourcePackManager::class);
-            $resourcePacksAccessor = $ref->getProperty("resourcePacks");
-            $uuidListAccessor = $ref->getProperty("uuidList");
-
-            $resourcePacksAccessor->setAccessible(true);
-            $uuidListAccessor->setAccessible(true);
-        }
-
-        $origin = Server::getInstance()->getResourcePackManager();
-
-        $resourcePacks = $resourcePacksAccessor->getValue($origin);
-        $uuidList = $uuidListAccessor->getValue($origin);
-
-        $resourcePacks[] = $resourcePack;
-        $uuidList[strtolower($resourcePack->getPackId())] = $resourcePack;
-
-        $resourcePacksAccessor->setValue($origin, $resourcePacks);
-        $uuidListAccessor->setValue($origin, $uuidList);
+        (function() use ($resourcePack){ //HACK : Closure bind hack to access inaccessible members
+            /** @var $this ResourcePackManager */
+            $this->resourcePacks[] = $resourcePack;
+            $this->uuidList[strtolower($resourcePack->getPackId())] = $resourcePack;
+        })->call(Server::getInstance()->getResourcePackManager());
     }
 }
