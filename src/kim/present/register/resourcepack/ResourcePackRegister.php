@@ -39,9 +39,11 @@ use function strtolower;
 final class ResourcePackRegister{
     private function __construct(){ }
 
+    /** @noinspection PhpUndefinedFieldInspection */
     public static function registerPack(ResourcePack $resourcePack) : void{
         (function() use ($resourcePack){ //HACK : Closure bind hack to access inaccessible members
-            /** @var $this ResourcePackManager */
+            /** @see ResourcePackManager::resourcePacks */
+            /** @see ResourcePackManager::uuidList */
             $this->resourcePacks[] = $resourcePack;
             $this->uuidList[strtolower($resourcePack->getPackId())] = $resourcePack;
         })->call(Server::getInstance()->getResourcePackManager());
