@@ -27,6 +27,7 @@ declare(strict_types=1);
 namespace kim\present\register\resourcepack;
 
 use Ahc\Json\Comment as CommentedJsonDecoder;
+use InvalidArgumentException;
 use pocketmine\resourcepacks\ResourcePack as IResourcePack;
 use pocketmine\resourcepacks\ResourcePackException;
 use pocketmine\Server;
@@ -47,8 +48,11 @@ use function str_ends_with;
 use function str_replace;
 use function strlen;
 use function substr;
+use function unlink;
 
 abstract class ResourcePack implements IResourcePack{
+    public const AUTOFILL_UUID = "00000000-0000-0000-0000-000000000000";
+
     protected string $name;
     protected string $id;
     protected string $version;
@@ -108,15 +112,13 @@ abstract class ResourcePack implements IResourcePack{
             }
         }
 
-        if($this->id === "00000000-0000-0000-0000-000000000000"){
+        if($this->id === self::AUTOFILL_UUID){
             $this->id = Uuid::fromString(md5($fullContents))->toString();
             $manifest["header"]["uuid"] = $this->id;
-            if(isset($manifest["modules"])){
-                foreach($manifest["modules"] as $key => $module){
-                    if($manifest["modules"][$key]["uuid"] === "00000000-0000-0000-0000-000000000000"){
-                        $manifest["modules"][$key]["uuid"] = UUID::fromString(md5($fullContents . $key))->toString();
-                    }
-                }
+        }
+        foreach((array) $manifest["modules"] as $key => $module){
+            if($manifest["modules"][$key]["uuid"] === self::AUTOFILL_UUID){
+                $manifest["modules"][$key]["uuid"] = UUID::fromString(md5($fullContents . $key))->toString();
             }
         }
         $archive->addFromString("manifest.json", json_encode($manifest, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
@@ -127,30 +129,22 @@ abstract class ResourcePack implements IResourcePack{
         unlink($tmp);
     }
 
-    /**
-     * Returns the human-readable name of the resource pack
-     */
+    /** Returns the human-readable name of the resource pack */
     public function getPackName() : string{
         return $this->name;
     }
 
-    /**
-     * Returns the pack's UUID as a human-readable string
-     */
+    /** Returns the pack's UUID as a human-readable string */
     public function getPackId() : string{
         return $this->id;
     }
 
-    /**
-     * Returns the size of the pack on disk in bytes.
-     */
+    /** Returns the size of the pack on disk in bytes. */
     public function getPackSize() : int{
         return strlen($this->contents) + 1;
     }
 
-    /**
-     * Returns a version number for the pack in the format major.minor.patch
-     */
+    /** Returns a version number for the pack in the format major.minor.patch */
     public function getPackVersion() : string{
         return $this->version;
     }
@@ -174,7 +168,7 @@ abstract class ResourcePack implements IResourcePack{
      * @param int $length Maximum length of data to return.
      *
      * @return string byte-array
-     * @throws \InvalidArgumentException if the chunk does not exist
+     * @throws InvalidArgumentException if the chunk does not exist
      */
     public function getPackChunk(int $start, int $length) : string{
         return substr($this->contents, $start, $length);

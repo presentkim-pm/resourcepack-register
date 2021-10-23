@@ -43,8 +43,9 @@ final class ResourcePackRegister{
     public static function registerPack(ResourcePack $resourcePack) : void{
         (function() use ($resourcePack){ //HACK : Closure bind hack to access inaccessible members
             /** @see ResourcePackManager::resourcePacks */
-            /** @see ResourcePackManager::uuidList */
             $this->resourcePacks[] = $resourcePack;
+
+            /** @see ResourcePackManager::uuidList */
             $this->uuidList[strtolower($resourcePack->getPackId())] = $resourcePack;
         })->call(Server::getInstance()->getResourcePackManager());
     }
