@@ -30,6 +30,7 @@ declare(strict_types=1);
 
 namespace kim\present\register\resourcepack;
 
+use Closure;
 use pocketmine\resourcepacks\ResourcePack;
 use pocketmine\resourcepacks\ResourcePackManager;
 use pocketmine\Server;
@@ -39,14 +40,14 @@ use function strtolower;
 final class ResourcePackRegister{
     private function __construct(){ }
 
-    /** @noinspection PhpUndefinedFieldInspection */
     public static function registerPack(ResourcePack $resourcePack) : void{
-        (function() use ($resourcePack){ //HACK : Closure bind hack to access inaccessible members
-            /** @see ResourcePackManager::resourcePacks */
-            $this->resourcePacks[] = $resourcePack;
-
-            /** @see ResourcePackManager::uuidList */
-            $this->uuidList[strtolower($resourcePack->getPackId())] = $resourcePack;
-        })->call(Server::getInstance()->getResourcePackManager());
+        Closure::bind( //HACK: Closure bind hack to access inaccessible members
+            closure: static function(ResourcePackManager $resourcePackManager) use ($resourcePack){
+                $resourcePackManager->resourcePacks[] = $resourcePack;
+                $resourcePackManager->uuidList[strtolower($resourcePack->getPackId())] = $resourcePack;
+            },
+            newThis: null,
+            newScope: ResourcePackManager::class
+        )(Server::getInstance()->getResourcePackManager());
     }
 }
