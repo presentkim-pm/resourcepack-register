@@ -37,22 +37,22 @@ use function strlen;
 use function substr;
 
 class FolderResourcePack extends ResourcePack{
-    /** @throws ResourcePackException */
-    public function __construct(string $dir){
-        $dir = self::cleanDirName($dir);
-        if(!file_exists($dir) || !is_dir($dir)){
-            throw new ResourcePackException("$dir is invalid path or not directory");
-        }
+	/** @throws ResourcePackException */
+	public function __construct(string $dir){
+		$dir = self::cleanDirName($dir);
+		if(!file_exists($dir) || !is_dir($dir)){
+			throw new ResourcePackException("$dir is invalid path or not directory");
+		}
 
-        $files = [];
-        /** @var \SplFileInfo $fileInfo */
-        foreach(new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dir)) as $fileInfo){
-            if($fileInfo->isFile()){
-                $realPath = $fileInfo->getPathname();
-                $innerPath = str_replace("\\", "/", substr($realPath, strlen($dir)));
-                $files[$innerPath] = $realPath;
-            }
-        }
-        parent::__construct($files);
-    }
+		$files = [];
+		/** @var \SplFileInfo $fileInfo */
+		foreach(new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dir)) as $fileInfo){
+			if($fileInfo->isFile()){
+				$realPath = $fileInfo->getPathname();
+				$innerPath = str_replace("\\", "/", substr($realPath, strlen($dir)));
+				$files[$innerPath] = $realPath;
+			}
+		}
+		parent::__construct($files);
+	}
 }

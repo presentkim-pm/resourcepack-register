@@ -13,9 +13,9 @@
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * @author  PresentKim (debe3721@gmail.com)
- * @link    https://github.com/PresentKim
- * @license https://www.gnu.org/licenses/lgpl-3.0 LGPL-3.0 License
+ * @author       PresentKim (debe3721@gmail.com)
+ * @link         https://github.com/PresentKim
+ * @license      https://www.gnu.org/licenses/lgpl-3.0 LGPL-3.0 License
  *
  *   (\ /)
  *  ( . .) ♥
@@ -38,16 +38,16 @@ use pocketmine\Server;
 use function strtolower;
 
 final class ResourcePackRegister{
-    private function __construct(){ }
+	private function __construct(){}
 
-    public static function registerPack(ResourcePack $resourcePack) : void{
-        Closure::bind( //HACK: Closure bind hack to access inaccessible members
-            closure: static function(ResourcePackManager $resourcePackManager) use ($resourcePack){
-                $resourcePackManager->resourcePacks[] = $resourcePack;
-                $resourcePackManager->uuidList[strtolower($resourcePack->getPackId())] = $resourcePack;
-            },
-            newThis: null,
-            newScope: ResourcePackManager::class
-        )(Server::getInstance()->getResourcePackManager());
-    }
+	public static function registerPack(ResourcePack $resourcePack) : void{
+		Closure::bind( //HACK: Closure bind hack to access inaccessible members
+			closure: static function(ResourcePackManager $resourcePackManager) use ($resourcePack){
+				$resourcePackManager->resourcePacks[] = $resourcePack;
+				$resourcePackManager->uuidList[strtolower($resourcePack->getPackId())] = $resourcePack;
+			},
+			newThis: null,
+			newScope: ResourcePackManager::class
+		)(Server::getInstance()->getResourcePackManager());
+	}
 }

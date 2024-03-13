@@ -35,20 +35,20 @@ use function strlen;
 use function substr;
 
 class PluginResourcePack extends ResourcePack{
-    /** @throws ResourcePackException */
-    public function __construct(PluginBase $plugin, string $innerDir){
-        $innerDir = self::cleanDirName($innerDir);
-        $filePaths = [];
+	/** @throws ResourcePackException */
+	public function __construct(PluginBase $plugin, string $innerDir){
+		$innerDir = self::cleanDirName($innerDir);
+		$filePaths = [];
 
-        foreach($plugin->getResources() as $key => $fileInfo){
-            $path = str_replace("\\", "/", $key);
-            if(str_starts_with($path, $innerDir)){
-                $realPath = $fileInfo->getPathname();
-                $innerPath = str_replace("\\", "/", substr($path, strlen($innerDir)));
+		foreach($plugin->getResources() as $key => $fileInfo){
+			$path = str_replace("\\", "/", $key);
+			if(str_starts_with($path, $innerDir)){
+				$realPath = $fileInfo->getPathname();
+				$innerPath = str_replace("\\", "/", substr($path, strlen($innerDir)));
 
-                $filePaths[$innerPath] = $realPath;
-            }
-        }
-        parent::__construct($filePaths);
-    }
+				$filePaths[$innerPath] = $realPath;
+			}
+		}
+		parent::__construct($filePaths);
+	}
 }
