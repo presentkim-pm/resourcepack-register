@@ -26,11 +26,19 @@ declare(strict_types=1);
 
 namespace kim\present\register\resourcepack;
 
+use Ahc\Json\Comment as CommentedJsonDecoder;
 use pocketmine\resourcepacks\ResourcePack as IResourcePack;
+use pocketmine\resourcepacks\ResourcePackException;
 use pocketmine\resourcepacks\ResourcePackManager;
 use pocketmine\Server;
+use Symfony\Component\Filesystem\Path;
 
+use function file_get_contents;
+use function json_encode;
+use function str_ends_with;
+use function str_starts_with;
 use function strtolower;
+use function time;
 
 final class ResourcePackRegister{
 	private function __construct(){}
@@ -44,5 +52,39 @@ final class ResourcePackRegister{
 			newThis: null,
 			newScope: ResourcePackManager::class
 		)(Server::getInstance()->getResourcePackManager());
+	}
+
+	public static function archiveDirectory(string $sourceDir, string $outputPath) : void{
+		$archive = new \ZipArchive();
+		$archive->open($outputPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
+
+		/** @var \SplFileInfo $fileInfo */
+		foreach(new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($sourceDir)) as $fileInfo){
+			if(!$fileInfo->isFile()){
+				continue;
+			}
+
+			$realPath = $fileInfo->getPathname();
+			$innerPath = Path::makeRelative($realPath, $sourceDir);
+			if(str_starts_with($innerPath, ".")){
+				continue;
+			}
+
+			$contents = file_get_contents($realPath);
+			if($contents === false){
+				throw new ResourcePackException("Failed to open $realPath file");
+			}
+
+			if(str_ends_with($innerPath, ".json")){
+				try{
+					$contents = json_encode((new CommentedJsonDecoder())->decode($contents));
+				}catch(\RuntimeException){
+				}
+			}
+			$archive->addFromString($innerPath, $contents);
+			$archive->setCompressionName($innerPath, \ZipArchive::CM_DEFLATE64);
+			$archive->setMtimeName($innerPath, time());
+		}
+		$archive->close();
 	}
 }
