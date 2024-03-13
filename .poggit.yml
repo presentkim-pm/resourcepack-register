@@ -1,0 +1,10 @@
+---
+branches:
+  - main
+projects:
+  resourcepack-register:
+    model: virion
+    type: library
+    lint:
+      phpstan: false
+...
