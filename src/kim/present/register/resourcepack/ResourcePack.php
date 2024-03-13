@@ -33,7 +33,6 @@ use pocketmine\resourcepacks\ResourcePackException;
 use pocketmine\Server;
 use Ramsey\Uuid\Uuid;
 use RuntimeException;
-use ZipArchive;
 
 use function file_exists;
 use function file_get_contents;
@@ -50,6 +49,9 @@ use function strlen;
 use function substr;
 use function unlink;
 
+use const JSON_UNESCAPED_SLASHES;
+use const JSON_UNESCAPED_UNICODE;
+
 abstract class ResourcePack implements IResourcePack{
 	public const AUTOFILL_UUID = "00000000-0000-0000-0000-000000000000";
 
@@ -61,14 +63,18 @@ abstract class ResourcePack implements IResourcePack{
 	protected string $contents;
 
 	/**
-	 * @param array<string, string> $files innerPath => realPath
+	 * @param string[]                      $files innerPath => realPath
+	 *
+	 * @phpstan-param array<string, string> $files innerPath => realPath
 	 *
 	 * @throws ResourcePackException
 	 */
 	protected function __construct(array $files){
 		if(!isset($files["manifest.json"]) || !file_exists($manifestPath = $files["manifest.json"])){
 			throw new ResourcePackException("manifest.json not found in the pack");
-		}elseif(($manifestData = file_get_contents($manifestPath)) === false){
+		}
+
+		if(($manifestData = file_get_contents($manifestPath)) === false){
 			throw new ResourcePackException("Failed to open manifest.json file.");
 		}
 
@@ -80,12 +86,12 @@ abstract class ResourcePack implements IResourcePack{
 			unset($files["manifest.json"]);
 		}
 
-		if(!isset($manifest["header"])
-			|| !isset($manifest["header"]["name"])
-			|| !isset($manifest["header"]["uuid"])
-			|| !isset($manifest["header"]["version"])
-			|| !isset($manifest["modules"])
-		){
+		if(!isset(
+			$manifest["header"]["name"],
+			$manifest["header"]["uuid"],
+			$manifest["header"]["version"],
+			$manifest["modules"]
+		)){
 			throw new ResourcePackException("manifest.json is missing required fields");
 		}
 
@@ -97,8 +103,8 @@ abstract class ResourcePack implements IResourcePack{
 		$tmp = self::cleanDirName(Server::getInstance()->getDataPath()) . "\$TEMP_" . md5($manifestPath) . ".zip";
 		$fullContents = "";
 
-		$archive = new ZipArchive();
-		$archive->open($tmp, ZipArchive::CREATE | ZipArchive::OVERWRITE);
+		$archive = new \ZipArchive();
+		$archive->open($tmp, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
 		foreach($files as $innerPath => $realPath){
 			if(is_file($realPath)){
 				$contents = file_get_contents($realPath);

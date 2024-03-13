@@ -30,8 +30,7 @@ declare(strict_types=1);
 
 namespace kim\present\register\resourcepack;
 
-use Closure;
-use pocketmine\resourcepacks\ResourcePack;
+use pocketmine\resourcepacks\ResourcePack as IResourcePack;
 use pocketmine\resourcepacks\ResourcePackManager;
 use pocketmine\Server;
 
@@ -40,8 +39,8 @@ use function strtolower;
 final class ResourcePackRegister{
 	private function __construct(){}
 
-	public static function registerPack(ResourcePack $resourcePack) : void{
-		Closure::bind( //HACK: Closure bind hack to access inaccessible members
+	public static function registerPack(IResourcePack $resourcePack) : void{
+		\Closure::bind( //HACK: Closure bind hack to access inaccessible members
 			closure: static function(ResourcePackManager $resourcePackManager) use ($resourcePack){
 				$resourcePackManager->resourcePacks[] = $resourcePack;
 				$resourcePackManager->uuidList[strtolower($resourcePack->getPackId())] = $resourcePack;
