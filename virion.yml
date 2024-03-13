@@ -4,5 +4,5 @@ antigen: kim\present\register\resourcepack
 version: 0.0.1
 api: 4.0.0
 authors: [ PresentKim ]
-description: Library that performs the function of registering resourcepacks
+description: "Provides utils for registering resourcepacks!"
 ...
