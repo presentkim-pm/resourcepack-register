@@ -42,6 +42,8 @@ use function str_ends_with;
 use function str_replace;
 use function str_starts_with;
 use function strtolower;
+use function sys_get_temp_dir;
+use function tempnam;
 use function time;
 use function unlink;
 
