@@ -1,7 +1,7 @@
 ---
 name: resourcepack-register
 antigen: kim\present\register\resourcepack
-version: 0.0.1
+version: 1.0.0
 api: 5.0.0
 authors: [ PresentKim ]
 description: "Provides utils for registering resourcepacks!"
