@@ -83,7 +83,7 @@ final class ResourcePackRegister{
 		self::registerPack($pack);
 	}
 
-	public static function archiveDirectory(string $sourceDir, string $outputPath) : void{
+	private static function archiveDirectory(string $sourceDir, string $outputPath) : void{
 		$archive = new \ZipArchive();
 		$archive->open($outputPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
 
