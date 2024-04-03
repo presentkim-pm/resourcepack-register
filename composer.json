@@ -1,18 +1,18 @@
 {
-    "name": "presentkim/resourcepack-register",
-    "description": "Provides utils for registering resourcepacks for PocketMine-MP",
-    "type": "library",
-    "license": "MIT",
-    "require": {
-        "pocketmine/pocketmine-mp": "^5.0.0"
-    },
-    "autoload": {
-        "psr-4": {"kim\\present\\register\\resourcepack\\": ["src/kim/present/register/resourcepack/"]}
-    },
-    "extra": {
-        "virion": {
-            "spec": "3.0",
-            "namespace-root": "kim\\present\\register\\resourcepack\\"
-        }
+  "name": "presentkim/resourcepack-register",
+  "description": "Provides utils for registering resourcepacks for PocketMine-MP",
+  "type": "library",
+  "license": "MIT",
+  "require": {
+    "pocketmine/pocketmine-mp": "^5.0.0"
+  },
+  "autoload": {
+    "psr-4": {"kim\\present\\register\\resourcepack\\": ["src/kim/present/register/resourcepack/"]}
+  },
+  "extra": {
+    "virion": {
+      "spec": "3.0",
+      "namespace-root": "kim\\present\\register\\resourcepack\\"
     }
+  }
 }

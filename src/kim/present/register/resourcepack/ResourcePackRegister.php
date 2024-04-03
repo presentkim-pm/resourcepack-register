@@ -49,88 +49,89 @@ use function time;
 use function unlink;
 
 final class ResourcePackRegister{
-	private function __construct(){}
 
-	public static function registerPack(IResourcePack $resourcePack) : void{
-		\Closure::bind( //HACK: Closure bind hack to access inaccessible members
-			closure: static function(ResourcePackManager $resourcePackManager) use ($resourcePack){
-				$resourcePackManager->resourcePacks[] = $resourcePack;
-				$resourcePackManager->uuidList[strtolower($resourcePack->getPackId())] = $resourcePack;
-			},
-			newThis: null,
-			newScope: ResourcePackManager::class
-		)(Server::getInstance()->getResourcePackManager());
-	}
+    private function __construct(){}
 
-
-	/**
-	 * Register resource pack from the specified directory of plugin resources
-	 *
-	 * @param bool $isTemp Whether archive to temporary dir. if false, archive to resource_packs dir
-	 */
-	public static function registerFromResource(Plugin $plugin, string $resourcePath, bool $isTemp = true) : void{
-		self::registerFromDirectory(
-			$plugin->getResourcePath($resourcePath),
-			$isTemp,
-			$plugin->getName() . "." . str_replace("/", ".", $resourcePath)
-		);
-	}
+    public static function registerPack(IResourcePack $resourcePack) : void{
+        \Closure::bind( //HACK: Closure bind hack to access inaccessible members
+            closure: static function(ResourcePackManager $resourcePackManager) use ($resourcePack){
+                $resourcePackManager->resourcePacks[] = $resourcePack;
+                $resourcePackManager->uuidList[strtolower($resourcePack->getPackId())] = $resourcePack;
+            },
+            newThis: null,
+            newScope: ResourcePackManager::class
+        )(Server::getInstance()->getResourcePackManager());
+    }
 
 
-	/**
-	 * Register resource pack from the specified directory
-	 *
-	 * @param bool   $isTemp     Whether archive to temporary dir. if false, archive to resource_packs dir
-	 * @param string $outputName Using when $isTemp is false, if empty, use md5 hash of $addonDir
-	 */
-	public static function registerFromDirectory(string $addonDir, bool $isTemp = true, string $outputName = "") : void{
-		$tmp = tempnam(sys_get_temp_dir(), "pm$");
-		self::archiveDirectory($addonDir, $tmp);
-		if($isTemp){
-			$pack = new TempResourcePack($tmp);
-		}else{
-			$output = Path::join(
-				Server::getInstance()->getResourcePackManager()->getPath(),
-				"_resourcepack-register." . ($outputName ?: md5($addonDir)) . ".zip"
-			);
-			copy($tmp, $output);
-			$pack = new ZippedResourcePack($output);
-		}
-		unlink($tmp);
-		self::registerPack($pack);
-	}
+    /**
+     * Register resource pack from the specified directory of plugin resources
+     *
+     * @param bool $isTemp Whether archive to temporary dir. if false, archive to resource_packs dir
+     */
+    public static function registerFromResource(Plugin $plugin, string $resourcePath, bool $isTemp = true) : void{
+        self::registerFromDirectory(
+            $plugin->getResourcePath($resourcePath),
+            $isTemp,
+            $plugin->getName() . "." . str_replace("/", ".", $resourcePath)
+        );
+    }
 
-	private static function archiveDirectory(string $sourceDir, string $outputPath) : void{
-		$archive = new \ZipArchive();
-		$archive->open($outputPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
 
-		/** @var \SplFileInfo $fileInfo */
-		foreach(new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($sourceDir)) as $fileInfo){
-			if(!$fileInfo->isFile()){
-				continue;
-			}
+    /**
+     * Register resource pack from the specified directory
+     *
+     * @param bool   $isTemp     Whether archive to temporary dir. if false, archive to resource_packs dir
+     * @param string $outputName Using when $isTemp is false, if empty, use md5 hash of $addonDir
+     */
+    public static function registerFromDirectory(string $addonDir, bool $isTemp = true, string $outputName = "") : void{
+        $tmp = tempnam(sys_get_temp_dir(), "pm$");
+        self::archiveDirectory($addonDir, $tmp);
+        if($isTemp){
+            $pack = new TempResourcePack($tmp);
+        }else{
+            $output = Path::join(
+                Server::getInstance()->getResourcePackManager()->getPath(),
+                "_resourcepack-register." . ($outputName ?: md5($addonDir)) . ".zip"
+            );
+            copy($tmp, $output);
+            $pack = new ZippedResourcePack($output);
+        }
+        unlink($tmp);
+        self::registerPack($pack);
+    }
 
-			$realPath = $fileInfo->getPathname();
-			$innerPath = Path::makeRelative($realPath, $sourceDir);
-			if(str_starts_with($innerPath, ".")){
-				continue;
-			}
+    private static function archiveDirectory(string $sourceDir, string $outputPath) : void{
+        $archive = new \ZipArchive();
+        $archive->open($outputPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
 
-			$contents = file_get_contents($realPath);
-			if($contents === false){
-				throw new ResourcePackException("Failed to open $realPath file");
-			}
+        /** @var \SplFileInfo $fileInfo */
+        foreach(new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($sourceDir)) as $fileInfo){
+            if(!$fileInfo->isFile()){
+                continue;
+            }
 
-			if(str_ends_with($innerPath, ".json")){
-				try{
-					$contents = json_encode((new CommentedJsonDecoder())->decode($contents));
-				}catch(\RuntimeException){
-				}
-			}
-			$archive->addFromString($innerPath, $contents);
-			$archive->setCompressionName($innerPath, \ZipArchive::CM_DEFLATE64);
-			$archive->setMtimeName($innerPath, time());
-		}
-		$archive->close();
-	}
+            $realPath = $fileInfo->getPathname();
+            $innerPath = Path::makeRelative($realPath, $sourceDir);
+            if(str_starts_with($innerPath, ".")){
+                continue;
+            }
+
+            $contents = file_get_contents($realPath);
+            if($contents === false){
+                throw new ResourcePackException("Failed to open $realPath file");
+            }
+
+            if(str_ends_with($innerPath, ".json")){
+                try{
+                    $contents = json_encode((new CommentedJsonDecoder())->decode($contents));
+                }catch(\RuntimeException){
+                }
+            }
+            $archive->addFromString($innerPath, $contents);
+            $archive->setCompressionName($innerPath, \ZipArchive::CM_DEFLATE64);
+            $archive->setMtimeName($innerPath, time());
+        }
+        $archive->close();
+    }
 }

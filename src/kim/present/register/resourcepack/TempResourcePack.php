@@ -41,107 +41,108 @@ use function strlen;
 use function substr;
 
 class TempResourcePack implements IResourcePack{
-	protected string $name;
-	protected string $id;
-	protected string $version;
-	protected string $contents;
-	protected string $sha256;
 
-	/** @throws ResourcePackException */
-	public function __construct(string $zipPath){
-		if(!file_exists($zipPath)){
-			throw new ResourcePackException("File not found");
-		}
+    protected string $name;
+    protected string $id;
+    protected string $version;
+    protected string $contents;
+    protected string $sha256;
 
-		$size = filesize($zipPath);
-		if($size === false){
-			throw new ResourcePackException("Unable to determine size of file");
-		}
+    /** @throws ResourcePackException */
+    public function __construct(string $zipPath){
+        if(!file_exists($zipPath)){
+            throw new ResourcePackException("File not found");
+        }
 
-		if($size === 0){
-			throw new ResourcePackException("Empty file, probably corrupted");
-		}
+        $size = filesize($zipPath);
+        if($size === false){
+            throw new ResourcePackException("Unable to determine size of file");
+        }
 
-		$archive = new \ZipArchive();
-		if(($openResult = $archive->open($zipPath)) !== true){
-			throw new ResourcePackException("Encountered ZipArchive error code $openResult while trying to open $zipPath");
-		}
+        if($size === 0){
+            throw new ResourcePackException("Empty file, probably corrupted");
+        }
 
-		$manifestData = $archive->getFromName("manifest.json");
-		if($manifestData === false){
-			throw new ResourcePackException("manifest.json not found in the resource pack");
-		}
-		$archive->close();
+        $archive = new \ZipArchive();
+        if(($openResult = $archive->open($zipPath)) !== true){
+            throw new ResourcePackException("Encountered ZipArchive error code $openResult while trying to open $zipPath");
+        }
 
-		try{
-			$manifest = (new CommentedJsonDecoder())->decode($manifestData);
-		}catch(\RuntimeException $e){
-			throw new ResourcePackException("Failed to parse manifest.json: " . $e->getMessage(), $e->getCode(), $e);
-		}
-		if(!($manifest instanceof \stdClass)){
-			throw new ResourcePackException("manifest.json should contain a JSON object, not " . gettype($manifest));
-		}
+        $manifestData = $archive->getFromName("manifest.json");
+        if($manifestData === false){
+            throw new ResourcePackException("manifest.json not found in the resource pack");
+        }
+        $archive->close();
 
-		try{
-			/** @var Manifest $manifest */
-			$mapper = new \JsonMapper();
-			$mapper->bExceptionOnMissingData = true;
-			$mapper->bStrictObjectTypeChecking = true;
-			$manifest = $mapper->map($manifest, new Manifest());
-		}catch(\JsonMapper_Exception $e){
-			throw new ResourcePackException("Invalid manifest.json contents: " . $e->getMessage(), 0, $e);
-		}
+        try{
+            $manifest = (new CommentedJsonDecoder())->decode($manifestData);
+        }catch(\RuntimeException $e){
+            throw new ResourcePackException("Failed to parse manifest.json: " . $e->getMessage(), $e->getCode(), $e);
+        }
+        if(!($manifest instanceof \stdClass)){
+            throw new ResourcePackException("manifest.json should contain a JSON object, not " . gettype($manifest));
+        }
 
-		$this->name = $manifest->header->name;
-		$this->id = $manifest->header->uuid;
-		$this->version = implode(".", $manifest->header->version);
-		$this->contents = file_get_contents($zipPath);
-		$this->sha256 = hash("sha256", $this->contents, true);
-	}
+        try{
+            /** @var Manifest $manifest */
+            $mapper = new \JsonMapper();
+            $mapper->bExceptionOnMissingData = true;
+            $mapper->bStrictObjectTypeChecking = true;
+            $manifest = $mapper->map($manifest, new Manifest());
+        }catch(\JsonMapper_Exception $e){
+            throw new ResourcePackException("Invalid manifest.json contents: " . $e->getMessage(), 0, $e);
+        }
 
-	/** Returns the human-readable name of the resource pack */
-	public function getPackName() : string{
-		return $this->name;
-	}
+        $this->name = $manifest->header->name;
+        $this->id = $manifest->header->uuid;
+        $this->version = implode(".", $manifest->header->version);
+        $this->contents = file_get_contents($zipPath);
+        $this->sha256 = hash("sha256", $this->contents, true);
+    }
 
-	/** Returns the pack's UUID as a human-readable string */
-	public function getPackId() : string{
-		return $this->id;
-	}
+    /** Returns the human-readable name of the resource pack */
+    public function getPackName() : string{
+        return $this->name;
+    }
 
-	/** Returns the size of the pack on disk in bytes. */
-	public function getPackSize() : int{
-		return strlen($this->contents) + 1;
-	}
+    /** Returns the pack's UUID as a human-readable string */
+    public function getPackId() : string{
+        return $this->id;
+    }
 
-	/** Returns a version number for the pack in the format major.minor.patch */
-	public function getPackVersion() : string{
-		return $this->version;
-	}
+    /** Returns the size of the pack on disk in bytes. */
+    public function getPackSize() : int{
+        return strlen($this->contents) + 1;
+    }
 
-	/**
-	 * Returns the raw SHA256 sum of the compressed resource pack zip. This is used by clients to validate pack
-	 * downloads.
-	 *
-	 * @return string byte-array length 32 bytes
-	 */
-	public function getSha256() : string{
-		return $this->sha256;
-	}
+    /** Returns a version number for the pack in the format major.minor.patch */
+    public function getPackVersion() : string{
+        return $this->version;
+    }
 
-	/**
-	 * Returns a chunk of the resource pack zip as a byte-array for sending to clients.
-	 *
-	 * Note that resource packs must **always** be in zip archive format for sending.
-	 * A folder resource loader may need to perform on-the-fly compression for this purpose.
-	 *
-	 * @param int $start  Offset to start reading the chunk from
-	 * @param int $length Maximum length of data to return.
-	 *
-	 * @return string byte-array
-	 * @throws \InvalidArgumentException if the chunk does not exist
-	 */
-	public function getPackChunk(int $start, int $length) : string{
-		return substr($this->contents, $start, $length);
-	}
+    /**
+     * Returns the raw SHA256 sum of the compressed resource pack zip. This is used by clients to validate pack
+     * downloads.
+     *
+     * @return string byte-array length 32 bytes
+     */
+    public function getSha256() : string{
+        return $this->sha256;
+    }
+
+    /**
+     * Returns a chunk of the resource pack zip as a byte-array for sending to clients.
+     *
+     * Note that resource packs must **always** be in zip archive format for sending.
+     * A folder resource loader may need to perform on-the-fly compression for this purpose.
+     *
+     * @param int $start  Offset to start reading the chunk from
+     * @param int $length Maximum length of data to return.
+     *
+     * @return string byte-array
+     * @throws \InvalidArgumentException if the chunk does not exist
+     */
+    public function getPackChunk(int $start, int $length) : string{
+        return substr($this->contents, $start, $length);
+    }
 }
